@@ -1,9 +1,11 @@
 from openai import OpenAI
 from moviepy.editor import VideoFileClip
-from .models import Video
+
+OPENAI_API_KEY = ""
 
 def transcribe_video(video_id):
-    client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+    from .models import Video
+    client = OpenAI(api_key=OPENAI_API_KEY)
     video = Video.objects.get(id=video_id)
     video_file_path = video.file.path
 
@@ -16,7 +18,6 @@ def transcribe_video(video_id):
             file=audio_file,
             response_format="vtt"
         )
-        print(transcription)
         video.transcription = transcription
         video.transcription_status = 'completed'
         video.save()
@@ -39,11 +40,10 @@ def convert_to_seconds(timestamp: str) -> float:
         return total_seconds
 
     except ValueError as e:
-        print(f"Error: {e}")
         return None
 
 def find_timestamp_for_query(transcript, query):
-    client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+    client = OpenAI(api_key=OPENAI_API_KEY)
     completion = client.chat.completions.create(
         model="gpt-4o",
         temperature=0.2,
@@ -64,9 +64,33 @@ def find_timestamp_for_query(transcript, query):
         ]
     )
     result = completion.choices[0].message.content
-    print(result)
+
     if result.strip().lower() == 'query not found':
         return -1
 
     timestamp_in_seconds = convert_to_seconds(result.strip())
     return timestamp_in_seconds
+
+def extract_relevant_content(transcript, query):
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    completion = client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0.2,
+        messages = [
+            {
+                "role": "system",
+                "content": """
+                    You are a helpful video analyzer. When provided with a transcription and a query, your task is to extract the **most relevant content** (a sentence, phrase, or section) from the transcription that best answers the query. 
+                    If the query cannot be answered based on the transcription, respond with `Query not found`.
+                    Your response should be concise and directly related to the query, without adding any additional text or commentary. If multiple sentences match, return only the most relevant one.
+                """
+            },
+            {
+                "role": "user",
+                "content": f"Transcription: {transcript}, Query: {query}"
+            }
+        ]
+    )
+    result = completion.choices[0].message.content
+
+    return result

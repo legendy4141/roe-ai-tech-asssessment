@@ -69,7 +69,7 @@ def search_video(request):
         return JsonResponse({'error': 'No video URL provided'}, status=400)
     
     video_filename = video_url.split('/')[-1]
-    print(video_filename)
+
     try:
         video = Video.objects.get(file__icontains=video_filename)
         if video.transcription:   
