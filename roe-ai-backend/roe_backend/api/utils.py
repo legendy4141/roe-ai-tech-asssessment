@@ -4,8 +4,10 @@ from moviepy.editor import VideoFileClip
 OPENAI_API_KEY = ""
 
 def transcribe_video(video_id):
+    """Transcribe the audio from a video file"""
     from .models import Video
     client = OpenAI(api_key=OPENAI_API_KEY)
+
     video = Video.objects.get(id=video_id)
     video_file_path = video.file.path
 
@@ -23,6 +25,7 @@ def transcribe_video(video_id):
         video.save()
 
 def convert_to_seconds(timestamp: str) -> float:
+    """Convert a timestamp string to total seconds"""
     try:
         parts = timestamp.split(":")
         if len(parts) != 3:
@@ -43,6 +46,7 @@ def convert_to_seconds(timestamp: str) -> float:
         return None
 
 def find_timestamp_for_query(transcript, query):
+    """Find the timestamp of a query in the video transcription"""
     client = OpenAI(api_key=OPENAI_API_KEY)
     completion = client.chat.completions.create(
         model="gpt-4o",
@@ -63,26 +67,31 @@ def find_timestamp_for_query(transcript, query):
             }
         ]
     )
+
     result = completion.choices[0].message.content
 
+    # Return -1 if the query is not found
     if result.strip().lower() == 'query not found':
         return -1
 
+    # Convert timestamp string to seconds
     timestamp_in_seconds = convert_to_seconds(result.strip())
     return timestamp_in_seconds
 
-def extract_relevant_content(transcript, query):
+def chat_with_user(transcript, query):
+    """Engage in a conversation with the user based on the provided transcription and query."""
     client = OpenAI(api_key=OPENAI_API_KEY)
     completion = client.chat.completions.create(
         model="gpt-4o",
         temperature=0.2,
-        messages = [
+        messages=[
             {
                 "role": "system",
                 "content": """
-                    You are a helpful video analyzer. When provided with a transcription and a query, your task is to extract the **most relevant content** (a sentence, phrase, or section) from the transcription that best answers the query. 
-                    If the query cannot be answered based on the transcription, respond with `Query not found`.
-                    Your response should be concise and directly related to the query, without adding any additional text or commentary. If multiple sentences match, return only the most relevant one.
+                    ou are a helpful companion who engages in conversations based on provided transcriptions. 
+                    The user will ask questions or share thoughts related to a transcription, and your task is to provide thoughtful, relevant, and engaging responses.
+                    Respond in a conversational, friendly, and informative tone. You can reference parts of the transcription where relevant but do not just extract phrases—ensure your answers are part of an ongoing dialogue.
+                    Your goal is to make the conversation flow naturally and engage with the user on a deeper level, reflecting on the content in the transcription and asking questions where appropriate.
                 """
             },
             {
@@ -91,6 +100,7 @@ def extract_relevant_content(transcript, query):
             }
         ]
     )
+
     result = completion.choices[0].message.content
 
     return result

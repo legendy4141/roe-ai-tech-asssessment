@@ -10,7 +10,7 @@ class Video(models.Model):
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
     title = models.CharField(max_length=255, null=True, blank=True)
-    file_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)  # Added field
+    file_hash = models.CharField(max_length=64, unique=True, null=True, blank=True)
 
     def __str__(self):
         return f"Video: {self.title or 'Untitled'}"

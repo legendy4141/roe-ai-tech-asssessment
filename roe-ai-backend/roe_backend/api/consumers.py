@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.apps import apps
 from channels.db import database_sync_to_async
-from .utils import extract_relevant_content
+from .utils import chat_with_user
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -43,7 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             video = await database_sync_to_async(self.get_video)(video_filename)
 
             transcription = video.transcription
-            result = extract_relevant_content(transcription, query)
+            result = chat_with_user(transcription, query)
             await self.send(text_data=json.dumps({
                 'message': result
             }))

@@ -46,9 +46,14 @@ const VideoUpload: React.FC<VideoUploadProps> = ({ onVideoUploaded }) => {
 
       console.log("Response from backend:", response.data);
       onVideoUploaded(response.data.videoUrl);
-    } catch (error: any) {
-      console.error("Upload failed:", error);
-      setErrorMessage("Upload failed! Please try again.");
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const errorMessage = error.response.data.error || "Upload failed!";
+        alert(`Upload failed: ${errorMessage}`);
+      } else {
+        console.error("Upload failed:", error);
+        alert("Upload failed!");
+      }
     } finally {
       setIsUploading(false);
     }
