@@ -4,6 +4,7 @@ import { useState } from "react";
 import VideoUpload from "@/components/VideoUpload";
 import SearchBar from "@/components/SearchBar";
 import VideoPlayer from "@/components/VideoPlayer";
+import ChatBox from "@/components/ChatBox";
 
 export default function Home() {
   const [videoUrl, setVideoUrl] = useState<string>("");
@@ -35,6 +36,7 @@ export default function Home() {
 
         <div className="space-y-6">
           <VideoUpload onVideoUploaded={handleVideoUploaded} />
+          <ChatBox videoUrl={videoUrl} />
         </div>
       </div>
     </div>
