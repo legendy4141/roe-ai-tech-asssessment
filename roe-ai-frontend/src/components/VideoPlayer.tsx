@@ -9,6 +9,36 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoUrl, seekToTimestamp }) 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
+  useEffect(() => {
+    const playVideo = async () => {
+      if (videoRef.current) {
+        if (seekToTimestamp !== undefined) {
+          videoRef.current.currentTime = seekToTimestamp;
+        }
+
+        try {
+          if (!isPlaying) {
+            await videoRef.current.play();
+            setIsPlaying(true);
+          }
+        } catch (error) {
+          console.error("Error playing video:", error);
+        }
+      }
+    };
+
+    if (seekToTimestamp !== undefined) {
+      setIsPlaying(false);
+      playVideo();
+    }
+
+    if (videoRef.current && !seekToTimestamp) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+
+  }, [seekToTimestamp, videoUrl]);
+  
   return (
     <div className="relative w-full h-[580px] bg-gray-300 rounded-md overflow-hidden">
       {/* If videoUrl exists, render the video */}

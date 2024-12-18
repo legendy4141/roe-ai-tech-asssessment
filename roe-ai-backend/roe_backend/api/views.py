@@ -8,7 +8,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.decorators import api_view, parser_classes
 from openai import OpenAI
 from moviepy.editor import VideoFileClip
-from .utils import transcribe_video
+from .utils import transcribe_video, find_timestamp_for_query
 from .models import Video
 
 def get_file_hash(file):
@@ -59,4 +59,25 @@ def upload_video(request):
 
 @api_view(['POST'])
 def search_video(request):
-    pass
+    query = request.data.get('query')
+    video_url = request.data.get('video_url')
+
+    if not query:
+        return JsonResponse({'error': 'No query provided'}, status=400)
+
+    if not video_url:
+        return JsonResponse({'error': 'No video URL provided'}, status=400)
+    
+    video_filename = video_url.split('/')[-1]
+    print(video_filename)
+    try:
+        video = Video.objects.get(file__icontains=video_filename)
+        if video.transcription:   
+            timestamp_in_seconds = find_timestamp_for_query(video.transcription, query)
+            if timestamp_in_seconds == -1:
+                return JsonResponse({'error': 'Invalid timestamp format in response'}, status=400)
+            return JsonResponse({'timestamp': timestamp_in_seconds}, status=200)
+        else:
+            return JsonResponse({'error': 'Video not found'}, status=404)
+    except Video.DoesNotExist:
+        return JsonResponse({'error': 'Video not found'}, status=404)
